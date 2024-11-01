@@ -1,13 +1,11 @@
 "use client";
 // @flow strict
-import { isValidEmail } from "@/utils/check-email";
-import axios from "axios";
 import { useState } from "react";
 import { TbMailForward } from "react-icons/tb";
 import { toast } from "react-toastify";
 
 function ContactForm() {
-  const [error, setError] = useState({ email: false, required: false });
+  const [error, setError] = useState({ required: false });
   const [isLoading, setIsLoading] = useState(false);
   const [userInput, setUserInput] = useState({
     name: "",
@@ -17,40 +15,48 @@ function ContactForm() {
 
   const checkRequired = () => {
     if (userInput.email && userInput.message && userInput.name) {
-      setError({ ...error, required: false });
+      setError({ required: false });
     }
   };
 
-  const handleSendMail = async (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-
     if (!userInput.email || !userInput.message || !userInput.name) {
-      setError({ ...error, required: true });
-      return;
-    } else if (error.email) {
+      setError({ required: true });
       return;
     } else {
-      setError({ ...error, required: false });
-    };
+      setError({ required: false });
+    }
 
     try {
       setIsLoading(true);
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/contact`,
-        userInput
-      );
+      const formData = new FormData();
+      formData.append("name", userInput.name);
+      formData.append("email", userInput.email);
+      formData.append("message", userInput.message);
+      formData.append("access_key", "fcd5e40f-c506-4733-8280-3b83c2e363f2");
 
-      toast.success("Message sent successfully!");
-      setUserInput({
-        name: "",
-        email: "",
-        message: "",
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        body: formData,
       });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success("Message sent successfully!");
+        setUserInput({
+          name: "",
+          email: "",
+          message: "",
+        });
+      } else {
+        toast.error(data.message);
+      }
     } catch (error) {
-      toast.error(error?.response?.data?.message);
+      toast.error("An error occurred while sending the message.");
     } finally {
       setIsLoading(false);
-    };
+    }
   };
 
   return (
@@ -65,7 +71,7 @@ function ContactForm() {
               className="bg-[#10172d] w-full border rounded-md border-[#353a52] focus:border-[#16f2b3] ring-0 outline-0 transition-all duration-300 px-3 py-2"
               type="text"
               maxLength="100"
-              required={true}
+              required
               onChange={(e) => setUserInput({ ...userInput, name: e.target.value })}
               onBlur={checkRequired}
               value={userInput.name}
@@ -78,15 +84,11 @@ function ContactForm() {
               className="bg-[#10172d] w-full border rounded-md border-[#353a52] focus:border-[#16f2b3] ring-0 outline-0 transition-all duration-300 px-3 py-2"
               type="email"
               maxLength="100"
-              required={true}
+              required
               value={userInput.email}
               onChange={(e) => setUserInput({ ...userInput, email: e.target.value })}
-              onBlur={() => {
-                checkRequired();
-                setError({ ...error, email: !isValidEmail(userInput.email) });
-              }}
+              onBlur={checkRequired}
             />
-            {error.email && <p className="text-sm text-red-400">Please provide a valid email!</p>}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -95,7 +97,7 @@ function ContactForm() {
               className="bg-[#10172d] w-full border rounded-md border-[#353a52] focus:border-[#16f2b3] ring-0 outline-0 transition-all duration-300 px-3 py-2"
               maxLength="500"
               name="message"
-              required={true}
+              required
               onChange={(e) => setUserInput({ ...userInput, message: e.target.value })}
               onBlur={checkRequired}
               rows="4"
@@ -103,22 +105,16 @@ function ContactForm() {
             />
           </div>
           <div className="flex flex-col items-center gap-3">
-            {error.required && <p className="text-sm text-red-400">
-              All fiels are required!
-            </p>}
+            {error.required && <p className="text-sm text-red-400">All fields are required!</p>}
             <button
               className="flex items-center gap-1 hover:gap-3 rounded-full bg-gradient-to-r from-pink-500 to-violet-600 px-5 md:px-12 py-2.5 md:py-3 text-center text-xs md:text-sm font-medium uppercase tracking-wider text-white no-underline transition-all duration-200 ease-out hover:text-white hover:no-underline md:font-semibold"
               role="button"
-              onClick={handleSendMail}
+              onClick={onSubmit}
               disabled={isLoading}
             >
               {
-                isLoading ?
-                <span>Sending Message...</span>:
-                <span className="flex items-center gap-1">
-                  Send Message
-                  <TbMailForward size={20} />
-                </span>
+                isLoading ? <span>Sending Message...</span> :
+                <span className="flex items-center gap-1">Send Message<TbMailForward size={20} /></span>
               }
             </button>
           </div>
@@ -126,6 +122,6 @@ function ContactForm() {
       </div>
     </div>
   );
-};
+}
 
 export default ContactForm;
