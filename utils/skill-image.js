@@ -13,7 +13,7 @@ import tensorflow from '/public/svg/skills/tensorflow.svg';
 import keras from '/public/svg/skills/keras.svg';
 import pytorch from '/public/svg/skills/pytorch.svg';
 import scikitLearn from '/public/svg/skills/scikit-learn.svg';
-import mongoDB from '/public/svg/skills/mongodb.svg';
+import mongoDB from '/public/svg/skills/mongoDB.svg';
 import postgresql from '/public/svg/skills/postgresql.svg';
 import mysql from '/public/svg/skills/mysql.svg';
 import aws from '/public/svg/skills/aws.svg';
